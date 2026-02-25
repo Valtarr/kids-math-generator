@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Math Quest</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Press Start 2P', monospace;
+    background: #1a2e0a;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(0,0,0,0.25) 31px, rgba(0,0,0,0.25) 32px),
+      repeating-linear-gradient(90deg, transparent, transparent 31px, rgba(0,0,0,0.25) 31px, rgba(0,0,0,0.25) 32px);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .mc-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    padding: 11px 18px;
+    cursor: pointer;
+    border: none;
+    letter-spacing: 1px;
+    transition: transform 0.08s;
+    outline: none;
+  }
+  .mc-btn:active { transform: translateY(2px); }
+  .btn-gen { background:#5a8c3b; color:#fff; text-shadow:2px 2px 0 #000; border:4px solid #3d6b28; box-shadow:inset -4px -4px 0 #3d6b28,inset 4px 4px 0 #7abf50; }
+  .btn-gen:hover { background:#6aaa45; }
+  .btn-pdf { background:#c0392b; color:#fff; text-shadow:2px 2px 0 #000; border:4px solid #7b1b12; box-shadow:inset -4px -4px 0 #7b1b12,inset 4px 4px 0 #e74c3c; }
+  .btn-pdf:hover { background:#e74c3c; }
+  .btn-img { background:#5de7e7; color:#000; border:4px solid #2aabab; box-shadow:inset -4px -4px 0 #2aabab,inset 4px 4px 0 #9efefe; }
+  .btn-img:hover { background:#7aefef; }
+
+  /* ── SETTINGS ── */
+  .settings {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    background: rgba(0,0,0,0.25);
+    border: 3px solid #3d6b28;
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    align-items: flex-start;
+  }
+  .setting-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: #aed585;
+    letter-spacing: 1px;
+  }
+  .mc-select {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    background: #3d6b28;
+    color: #fff;
+    border: 3px solid #2a4a1a;
+    box-shadow: inset -2px -2px 0 #2a4a1a, inset 2px 2px 0 #5a8c3b;
+    padding: 6px 10px;
+    cursor: pointer;
+    outline: none;
+  }
+  .ops-group { gap: 5px; }
+  .mc-check {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #e8f5e9;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .mc-check input[type=checkbox] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #5a8c3b;
+  }
+
+  /* ── SHEET ── */
+  #sheet {
+    background: #fff;
+    max-width: 540px;
+    margin: 0 auto;
+    border: 5px solid #444;
+    overflow: hidden;
+  }
+
+  /* ── GRASS / DIRT ── */
+  .grass-strip {
+    height: 14px;
+    background: repeating-linear-gradient(90deg,
+      #5a8c3b 0, #5a8c3b 8px, #4a7a2b 8px, #4a7a2b 12px,
+      #6aaa45 12px, #6aaa45 20px, #5a8c3b 20px, #5a8c3b 28px);
+    border-bottom: 3px solid #3d6b28;
+  }
+  .dirt-strip {
+    height: 10px;
+    background: repeating-linear-gradient(90deg,
+      #866043 0, #866043 10px, #7a5535 10px, #7a5535 15px,
+      #9a7050 15px, #9a7050 24px, #866043 24px, #866043 32px);
+    border-bottom: 3px solid #5a3a1a;
+  }
+  .stone-strip {
+    height: 8px;
+    background: repeating-linear-gradient(90deg,
+      #8b8b8b 0, #8b8b8b 9px, #777 9px, #777 13px,
+      #999 13px, #999 22px, #8b8b8b 22px, #8b8b8b 30px);
+    border-top: 2px solid #555;
+    border-bottom: 2px solid #666;
+  }
+
+  /* ── BANNER ── */
+  .banner {
+    padding: 14px 20px 10px;
+    text-align: center;
+    border-bottom: 3px solid #ccc;
+  }
+  .deco-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .banner-title {
+    font-size: 16px;
+    color: #111;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    letter-spacing: 1px;
+    line-height: 1.7;
+  }
+  .banner-sub {
+    font-size: 7px;
+    color: #666;
+    margin-top: 5px;
+  }
+
+  /* ── TORCH DIVIDER ── */
+  .torch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 7px 20px;
+    background: #f5f5f5;
+    border-bottom: 2px solid #ddd;
+    border-top: 2px solid #ddd;
+  }
+  .torch-label {
+    font-size: 6px;
+    color: #777;
+    text-align: center;
+    letter-spacing: 0px;
+    line-height: 1.6;
+  }
+
+  /* ── TASKS ── */
+  :root {
+    --task-font: 13px;
+    --task-pad: 10px;
+    --banner-pad: 14px 20px 10px;
+  }
+  .tasks-area {
+    padding: 10px 18px 12px;
+  }
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 2px solid #aaa;
+  }
+  .task-box {
+    display: flex;
+    align-items: center;
+    padding: var(--task-pad) 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    gap: 6px;
+  }
+  .task-num {
+    font-size: 6px;
+    color: #aaa;
+    min-width: 14px;
+    flex-shrink: 0;
+  }
+  .task-expr {
+    font-size: var(--task-font);
+    color: #111;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .op-minus {
+    display: inline-block;
+    width: 0.6em;
+    height: 0.12em;
+    background: currentColor;
+    vertical-align: middle;
+    margin-bottom: 0.1em;
+  }
+
+  /* ── BOTTOM DECO ── */
+  .bottom-zone {
+    border-top: 3px solid #ccc;
+    padding: 10px 18px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .bottom-label {
+    font-size: 6px;
+    color: #aaa;
+    text-align: center;
+    line-height: 2;
+  }
+
+  @media print {
+    body { background:#fff; padding:0; }
+    .controls, .settings { display:none !important; }
+    #sheet { border:2px solid #999; max-width:100%; }
+    .task-expr { font-size: var(--task-font) !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="settings">
+  <div class="setting-group">
+    <span class="setting-label">MAX VALUE</span>
+    <select class="mc-select" id="settingMaxVal">
+      <option value="5">5</option>
+      <option value="10" selected>10</option>
+      <option value="20">20</option>
+    </select>
+  </div>
+  <div class="setting-group">
+    <span class="setting-label">ITEMS PER TASK</span>
+    <select class="mc-select" id="settingNumItems">
+      <option value="2" selected>2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+    </select>
+  </div>
+  <div class="setting-group ops-group">
+    <span class="setting-label">OPERATIONS</span>
+    <label class="mc-check"><input type="checkbox" id="opAdd" checked> + ADD</label>
+    <label class="mc-check"><input type="checkbox" id="opSub" checked> − SUB</label>
+    <label class="mc-check"><input type="checkbox" id="opMul"> × MUL</label>
+    <label class="mc-check"><input type="checkbox" id="opDiv"> ÷ DIV</label>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="mc-btn btn-gen" onclick="generateSheet()">&#9654; NEW SHEET</button>
+  <button class="mc-btn btn-pdf" onclick="downloadPDF()">&#11015; SAVE PDF</button>
+  <button class="mc-btn btn-img" onclick="downloadImage()">&#11015; SAVE IMAGE</button>
+</div>
+
+<div id="sheet">
+  <div class="grass-strip"></div>
+  <div class="dirt-strip"></div>
+
+  <div class="banner">
+    <div class="deco-row" id="topDeco"></div>
+    <div class="banner-title">⚔ MATH QUEST ⚔</div>
+    <div class="banner-sub" id="bannerSub">Addition &amp; Subtraction · Numbers up to 10</div>
+  </div>
+
+  <div class="torch-row">
+    <span id="torchL"></span>
+    <span class="torch-label">SOLVE EACH PROBLEM — WRITE YOUR ANSWER ON THE LINE</span>
+    <span id="torchR"></span>
+  </div>
+
+  <div class="tasks-area">
+    <div class="tasks-grid" id="tasksGrid"></div>
+  </div>
+
+  <div class="stone-strip"></div>
+
+  <div class="bottom-zone" id="bottomZone"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ── PIXEL ART ──────────────────────────────────────────────────────────────
+
+const SPRITES = {
+  creeper: (s) => `<svg width="${s}" height="${s}" viewBox="0 0 8 8" style="image-rendering:pixelated">
+    <rect width="8" height="8" fill="none" stroke="#444" stroke-width="0.5"/>
+    <rect x="1" y="0" width="6" height="8" fill="none" stroke="#333" stroke-width="0.3"/>
+    <rect x="2" y="2" width="1" height="2" fill="#222"/>
+    <rect x="5" y="2" width="1" height="2" fill="#222"/>
+    <rect x="3" y="4" width="2" height="1" fill="#222"/>
+    <rect x="2" y="4" width="1" height="1" fill="#222"/>
+    <rect x="5" y="4" width="1" height="1" fill="#222"/>
+    <rect x="3" y="5" width="2" height="1" fill="#222"/>
+  </svg>`,
+
+  zombie: (s) => `<svg width="${s}" height="${s}" viewBox="0 0 8 8" style="image-rendering:pixelated">
+    <rect x="1" y="0" width="6" height="5" fill="none" stroke="#333" stroke-width="0.4"/>
+    <rect x="2" y="1" width="1" height="1" fill="#222"/>
+    <rect x="5" y="1" width="1" height="1" fill="#222"/>
+    <rect x="3" y="3" width="2" height="1" fill="#555"/>
+    <!-- arms out -->
+    <rect x="0" y="5" width="3" height="1" fill="#555" stroke="#333" stroke-width="0.3"/>
+    <rect x="5" y="5" width="3" height="1" fill="#555" stroke="#333" stroke-width="0.3"/>
+    <!-- legs -->
+    <rect x="2" y="6" width="2" height="2" fill="#333" stroke="#222" stroke-width="0.3"/>
+    <rect x="5" y="6" width="2" height="2" fill="#333" stroke="#222" stroke-width="0.3"/>
+  </svg>`,
+
+  steve: (s) => `<svg width="${s}" height="${s}" viewBox="0 0 8 10" style="image-rendering:pixelated">
+    <!-- head -->
+    <rect x="1" y="0" width="6" height="5" fill="none" stroke="#333" stroke-width="0.4"/>
+    <rect x="2" y="2" width="1" height="1" fill="#222"/>
+    <rect x="5" y="2" width="1" height="1" fill="#222"/>
+    <rect x="3" y="3" width="2" height="1" fill="#888"/>
+    <!-- body -->
+    <rect x="2" y="5" width="4" height="3" fill="none" stroke="#333" stroke-width="0.4"/>
+    <!-- arms -->
+    <rect x="0" y="5" width="2" height="3" fill="none" stroke="#333" stroke-width="0.4"/>
+    <rect x="6" y="5" width="2" height="3" fill="none" stroke="#333" stroke-width="0.4"/>
+    <!-- legs -->
+    <rect x="2" y="8" width="2" height="2" fill="none" stroke="#333" stroke-width="0.4"/>
+    <rect x="4" y="8" width="2" height="2" fill="none" stroke="#333" stroke-width="0.4"/>
+  </svg>`,
+
+  sword: (s) => `<svg width="${Math.round(s*0.55)}" height="${s}" viewBox="0 0 6 14" style="image-rendering:pixelated">
+    <rect x="2" y="0" width="2" height="9" fill="#bbb" stroke="#555" stroke-width="0.4"/>
+    <rect x="2" y="0" width="1" height="9" fill="#eee" opacity="0.6"/>
+    <rect x="0" y="9" width="6" height="1.5" fill="#555"/>
+    <rect x="2" y="10" width="2" height="4" fill="#7a3a10" stroke="#5a2a00" stroke-width="0.3"/>
+    <rect x="2" y="13" width="2" height="1" fill="#444"/>
+  </svg>`,
+
+  pickaxe: (s) => `<svg width="${s}" height="${Math.round(s*0.75)}" viewBox="0 0 14 10" style="image-rendering:pixelated">
+    <rect x="0" y="1" width="5" height="2" fill="#bbb" stroke="#555" stroke-width="0.4"/>
+    <rect x="4" y="0" width="2" height="4" fill="#999" stroke="#555" stroke-width="0.3"/>
+    <rect x="9" y="1" width="5" height="2" fill="#bbb" stroke="#555" stroke-width="0.4"/>
+    <rect x="6" y="2" width="2" height="8" fill="#7a3a10" stroke="#5a2a00" stroke-width="0.3"/>
+  </svg>`,
+
+  axe: (s) => `<svg width="${Math.round(s*0.8)}" height="${s}" viewBox="0 0 8 12" style="image-rendering:pixelated">
+    <rect x="1" y="0" width="5" height="5" fill="none" stroke="#555" stroke-width="0.5"/>
+    <rect x="1" y="1" width="3" height="3" fill="#ccc" opacity="0.5"/>
+    <rect x="5" y="3" width="2" height="1" fill="#bbb"/>
+    <rect x="3" y="4" width="2" height="8" fill="#7a3a10" stroke="#5a2a00" stroke-width="0.3"/>
+  </svg>`,
+
+  shield: (s) => `<svg width="${Math.round(s*0.85)}" height="${s}" viewBox="0 0 8 10" style="image-rendering:pixelated">
+    <rect x="0" y="0" width="8" height="7" fill="none" stroke="#555" stroke-width="0.5"/>
+    <rect x="1" y="7" width="6" height="2" fill="none" stroke="#555" stroke-width="0.4"/>
+    <rect x="2" y="8" width="4" height="2" fill="none" stroke="#555" stroke-width="0.3"/>
+    <rect x="3" y="9" width="2" height="1" fill="none" stroke="#555" stroke-width="0.3"/>
+    <rect x="2" y="2" width="4" height="3" fill="#ccc" opacity="0.4"/>
+    <rect x="3" y="1" width="2" height="1" fill="#ccc" opacity="0.4"/>
+  </svg>`,
+
+  chest: (s) => `<svg width="${s}" height="${Math.round(s*0.8)}" viewBox="0 0 12 10" style="image-rendering:pixelated">
+    <rect width="12" height="10" fill="none" stroke="#555" stroke-width="0.5"/>
+    <rect x="0" y="4" width="12" height="1" fill="#777"/>
+    <rect x="4" y="2" width="4" height="3" fill="none" stroke="#aa8800" stroke-width="0.5"/>
+    <rect x="5" y="3" width="2" height="2" fill="#cc9900"/>
+    <rect x="1" y="1" width="10" height="1" fill="#ccc" opacity="0.2"/>
+    <rect x="1" y="6" width="10" height="1" fill="#ccc" opacity="0.2"/>
+  </svg>`,
+
+  heart: (s) => `<svg width="${s}" height="${s}" viewBox="0 0 8 7" style="image-rendering:pixelated">
+    <rect x="1" y="0" width="2" height="1" fill="#cc0000"/>
+    <rect x="5" y="0" width="2" height="1" fill="#cc0000"/>
+    <rect x="0" y="1" width="8" height="2" fill="#cc0000"/>
+    <rect x="1" y="3" width="6" height="1" fill="#cc0000"/>
+    <rect x="2" y="4" width="4" height="1" fill="#cc0000"/>
+    <rect x="3" y="5" width="2" height="1" fill="#cc0000"/>
+    <rect x="4" y="6" width="1" height="1" fill="#cc0000"/>
+    <rect x="1" y="1" width="1" height="1" fill="#ff6666" opacity="0.5"/>
+  </svg>`,
+
+  diamond_gem: (s) => `<svg width="${s}" height="${s}" viewBox="0 0 8 8" style="image-rendering:pixelated">
+    <rect x="3" y="0" width="2" height="1" fill="#555"/>
+    <rect x="1" y="1" width="6" height="1" fill="#666"/>
+    <rect x="0" y="2" width="8" height="3" fill="#aaa"/>
+    <rect x="1" y="5" width="6" height="1" fill="#888"/>
+    <rect x="2" y="6" width="4" height="1" fill="#777"/>
+    <rect x="3" y="7" width="2" height="1" fill="#666"/>
+    <rect x="1" y="2" width="2" height="2" fill="#eee" opacity="0.6"/>
+  </svg>`,
+
+  tnt: (s) => `<svg width="${s}" height="${s}" viewBox="0 0 8 8" style="image-rendering:pixelated">
+    <rect width="8" height="8" fill="none" stroke="#555" stroke-width="0.5"/>
+    <rect y="1" width="8" height="2" fill="#ddd"/>
+    <rect y="5" width="8" height="2" fill="#ddd"/>
+    <rect x="1" y="2" width="1" height="1" fill="#333"/>
+    <rect x="3" y="2" width="2" height="1" fill="#333"/>
+    <rect x="6" y="2" width="1" height="1" fill="#333"/>
+    <!-- fuse -->
+    <rect x="4" y="0" width="1" height="1" fill="#555"/>
+    <rect x="5" y="-1" width="1" height="1" fill="#888"/>
+  </svg>`,
+
+  apple: (s) => `<svg width="${s}" height="${s}" viewBox="0 0 8 8" style="image-rendering:pixelated">
+    <rect x="4" y="0" width="2" height="1" fill="#3a7a20"/>
+    <rect x="3" y="1" width="1" height="1" fill="#7a3a10"/>
+    <rect x="1" y="2" width="6" height="1" fill="#999"/>
+    <rect x="0" y="3" width="8" height="3" fill="#999"/>
+    <rect x="1" y="6" width="6" height="1" fill="#888"/>
+    <rect x="2" y="7" width="4" height="1" fill="#777"/>
+    <rect x="1" y="2" width="6" height="5" fill="none" stroke="#555" stroke-width="0.4"/>
+    <rect x="1" y="3" width="2" height="1" fill="#fff" opacity="0.5"/>
+  </svg>`,
+
+  star: (s) => `<svg width="${s}" height="${s}" viewBox="0 0 8 8" style="image-rendering:pixelated">
+    <rect x="3" y="0" width="2" height="2" fill="#888"/>
+    <rect x="1" y="2" width="6" height="2" fill="#aaa"/>
+    <rect x="0" y="3" width="8" height="2" fill="#bbb"/>
+    <rect x="1" y="5" width="2" height="2" fill="#aaa"/>
+    <rect x="5" y="5" width="2" height="2" fill="#aaa"/>
+    <rect x="3" y="1" width="2" height="1" fill="#eee" opacity="0.5"/>
+  </svg>`,
+
+  torch: (s) => `<svg width="${Math.round(s*0.45)}" height="${s}" viewBox="0 0 5 12" style="image-rendering:pixelated">
+    <rect x="1" y="0" width="3" height="1" fill="#ffd700"/>
+    <rect x="1" y="1" width="3" height="1" fill="#ff8800"/>
+    <rect x="2" y="2" width="1" height="1" fill="#ffaa00"/>
+    <rect x="2" y="3" width="1" height="7" fill="#7a3a10"/>
+    <rect x="1" y="9" width="3" height="1" fill="#5a2a00"/>
+    <rect x="2" y="1" width="1" height="1" fill="#fff8" />
+  </svg>`,
+
+  bow: (s) => `<svg width="${Math.round(s*0.6)}" height="${s}" viewBox="0 0 6 12" style="image-rendering:pixelated">
+    <!-- bow arc -->
+    <rect x="0" y="1" width="1" height="10" fill="#7a3a10" stroke="#5a2a00" stroke-width="0.3"/>
+    <rect x="1" y="0" width="1" height="1" fill="#7a3a10"/>
+    <rect x="1" y="11" width="1" height="1" fill="#7a3a10"/>
+    <!-- string -->
+    <rect x="2" y="1" width="1" height="4" fill="#888"/>
+    <rect x="3" y="5" width="1" height="1" fill="#888"/>
+    <rect x="2" y="6" width="1" height="5" fill="#888"/>
+    <!-- arrow -->
+    <rect x="3" y="3" width="3" height="1" fill="#bbb"/>
+    <rect x="5" y="2" width="1" height="1" fill="#555"/>
+  </svg>`,
+};
+
+// ── TASK LOGIC ─────────────────────────────────────────────────────────────
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getDivisors(n, maxVal) {
+  const divs = [];
+  for (let d = 1; d <= Math.min(n, maxVal); d++) {
+    if (n % d === 0) divs.push(d);
+  }
+  return divs;
+}
+
+function makeTask(maxVal, numItems, ops) {
+  if (ops.length === 0) return '? =';
+  const SYM = { '+': '+', '-': '-', '*': '&times;', '/': '&divide;' };
+
+  // If only division and 2 items: generate a clean a÷b pair
+  if (numItems === 2 && ops.length === 1 && ops[0] === '/') {
+    const b = randomInt(1, Math.max(1, Math.floor(maxVal / 2)));
+    const k = randomInt(1, Math.floor(maxVal / b));
+    return `${b * k} ${SYM['/']} ${b} =`;
+  }
+
+  const numbers = [];
+  const operations = [];
+  let current = randomInt(1, maxVal);
+  numbers.push(current);
+
+  for (let i = 1; i < numItems; i++) {
+    // Try to pick a valid op; retry up to 10 times to avoid degenerate cases
+    let op, nextNum, result;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      op = ops[Math.floor(Math.random() * ops.length)];
+      if (op === '+') {
+        nextNum = randomInt(1, maxVal);
+        result = current + nextNum;
+        break;
+      } else if (op === '-') {
+        if (current < 1) continue; // can't subtract meaningfully from 0
+        nextNum = randomInt(1, Math.min(current, maxVal));
+        result = current - nextNum;
+        break;
+      } else if (op === '*') {
+        nextNum = randomInt(1, maxVal);
+        result = current * nextNum;
+        break;
+      } else { // '/'
+        if (current === 0) continue;
+        const divs = getDivisors(current, maxVal);
+        // Prefer divisors > 1 for more interesting problems
+        const goodDivs = divs.filter(d => d > 1);
+        const pool = goodDivs.length > 0 ? goodDivs : divs;
+        nextNum = pool[Math.floor(Math.random() * pool.length)];
+        result = current / nextNum;
+        break;
+      }
+    }
+    // Fallback to addition if no valid op found
+    if (op === undefined || nextNum === undefined) {
+      op = '+';
+      nextNum = randomInt(1, maxVal);
+      result = current + nextNum;
+    }
+    operations.push(op);
+    numbers.push(nextNum);
+    current = result;
+  }
+
+  let expr = String(numbers[0]);
+  for (let i = 0; i < operations.length; i++) {
+    expr += ` ${SYM[operations[i]]} ${numbers[i + 1]}`;
+  }
+  return expr + ' =';
+}
+
+// ── SHEET ──────────────────────────────────────────────────────────────────
+
+const SPRITE_KEYS = Object.keys(SPRITES).filter(k => k !== 'torch');
+
+function pickN(arr, n) {
+  const pool = [...arr]; const out = [];
+  for (let i = 0; i < n && pool.length; i++) {
+    out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  return out;
+}
+
+function getSettings() {
+  const maxVal   = parseInt(document.getElementById('settingMaxVal').value, 10);
+  const numItems = parseInt(document.getElementById('settingNumItems').value, 10);
+  const ops = [];
+  if (document.getElementById('opAdd').checked) ops.push('+');
+  if (document.getElementById('opSub').checked) ops.push('-');
+  if (document.getElementById('opMul').checked) ops.push('*');
+  if (document.getElementById('opDiv').checked) ops.push('/');
+  if (ops.length === 0) ops.push('+'); // always at least addition
+  return { maxVal, numItems, ops };
+}
+
+// Scale visual settings so the sheet always fits a page
+function applyScale(numItems) {
+  const root = document.documentElement.style;
+  if (numItems <= 2) {
+    root.setProperty('--task-font', '13px');
+    root.setProperty('--task-pad',  '10px');
+  } else if (numItems === 3) {
+    root.setProperty('--task-font', '11px');
+    root.setProperty('--task-pad',  '8px');
+  } else if (numItems === 4) {
+    root.setProperty('--task-font', '10px');
+    root.setProperty('--task-pad',  '7px');
+  } else {
+    root.setProperty('--task-font', '8px');
+    root.setProperty('--task-pad',  '5px');
+  }
+}
+
+function generateSheet() {
+  const { maxVal, numItems, ops } = getSettings();
+  applyScale(numItems);
+
+  // deco sprite size: shrink for larger tasks so banner stays compact
+  const decoSize = numItems <= 2 ? 38 : numItems <= 3 ? 30 : 24;
+  const botSize  = numItems <= 2 ? 26 : numItems <= 3 ? 22 : 18;
+
+  // Update banner subtitle
+  const OP_NAMES = { '+': 'Addition', '-': 'Subtraction', '*': 'Multiplication', '/': 'Division' };
+  const opLabel = ops.map(o => OP_NAMES[o]).join(' & ');
+  document.getElementById('bannerSub').textContent =
+    `${opLabel} \u00B7 Numbers up to ${maxVal}`;
+
+  // top deco: 5 sprites
+  const topKeys = pickN(SPRITE_KEYS, 5);
+  document.getElementById('topDeco').innerHTML =
+    topKeys.map(k => SPRITES[k](decoSize)).join('');
+
+  // torches
+  const t = SPRITES.torch(28);
+  document.getElementById('torchL').innerHTML = t;
+  document.getElementById('torchR').innerHTML = t;
+
+  // tasks
+  const grid = document.getElementById('tasksGrid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 20; i++) {
+    const expr = makeTask(maxVal, numItems, ops);
+    const div = document.createElement('div');
+    div.className = 'task-box';
+    div.innerHTML =
+      `<span class="task-num">${i}.</span>` +
+      `<span class="task-expr">${expr}</span>`;
+    grid.appendChild(div);
+  }
+
+  // bottom deco: 3 left, label, 3 right
+  const botKeys = pickN(SPRITE_KEYS, 6);
+  const left  = botKeys.slice(0,3).map(k => SPRITES[k](botSize)).join('');
+  const right = botKeys.slice(3).map(k => SPRITES[k](botSize)).join('');
+  document.getElementById('bottomZone').innerHTML =
+    `<div style="display:flex;gap:8px;align-items:flex-end">${left}</div>` +
+    `<div class="bottom-label">\u2605 GOOD<br>LUCK! \u2605</div>` +
+    `<div style="display:flex;gap:8px;align-items:flex-end">${right}</div>`;
+}
+
+// ── EXPORT ─────────────────────────────────────────────────────────────────
+
+async function capture() {
+  return html2canvas(document.getElementById('sheet'), {
+    scale: 2.5, backgroundColor: '#ffffff', useCORS: true, logging: false
+  });
+}
+
+async function downloadPDF() {
+  const sheet = document.getElementById('sheet');
+  const canvas = await capture();
+  const { jsPDF } = window.jspdf;
+  const mm = 25.4 / 96;
+  const w = sheet.offsetWidth * mm;
+  const h = sheet.offsetHeight * mm;
+  const pdf = new jsPDF({ unit: 'mm', format: [w, h] });
+  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, h);
+  pdf.save('minecraft-math-sheet.pdf');
+}
+
+async function downloadImage() {
+  const canvas = await capture();
+  const a = document.createElement('a');
+  a.download = 'minecraft-math-sheet.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+generateSheet();
+</script>
+</body>
+</html>
